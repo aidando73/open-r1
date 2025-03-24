@@ -6,6 +6,7 @@ attn_implementation: flash_attention_2
 # Data training arguments
 dataset_name: aidando73/math_level3to5_data
 dataset_config: default
+dataset_split: train
 system_prompt: |-
   You are a helpful math assistant. Solve problems step by step using the following format:
 
