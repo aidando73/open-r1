@@ -15,7 +15,7 @@
 import logging
 import os
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 
 import datasets
 import torch
@@ -40,7 +40,7 @@ from open_r1.utils import get_tokenizer
 from open_r1.utils.callbacks import get_callbacks
 from open_r1.utils.wandb_logging import init_wandb_training
 from trl import GRPOTrainer, ModelConfig, ScriptArguments, TrlParser, get_peft_config
-
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -191,9 +191,9 @@ def main(script_args, training_args, model_args):
 
     dataset = dataset.map(make_conversation)
 
-    for split in dataset:
-        if "messages" in dataset[split].column_names:
-            dataset[split] = dataset[split].remove_columns("messages")
+    # for split in dataset:
+    #     if "messages" in dataset[split].column_names:
+    #         dataset[split] = dataset[split].remove_columns("messages")
 
     logger.info("*** Initializing model kwargs ***")
     torch_dtype = (
@@ -221,6 +221,14 @@ def main(script_args, training_args, model_args):
         callbacks=get_callbacks(training_args, model_args),
         processing_class=tokenizer,
     )
+
+    if trainer.accelerator.is_main_process:
+        wandb.init(
+            name=training_args.hub_model_id,
+            project=training_args.wandb_project,
+            entity=training_args.wandb_entity,
+            config=asdict(training_args)
+        )
 
     ###############
     # Training loop
