@@ -1,5 +1,4 @@
 # Model arguments
-model_name_or_path: Qwen/Qwen2.5-Math-7B
 model_revision: main
 torch_dtype: bfloat16
 attn_implementation: flash_attention_2
@@ -7,9 +6,41 @@ attn_implementation: flash_attention_2
 # Data training arguments
 dataset_name: DigitalLearningGmbH/MATH-lighteval
 dataset_config: default
-system_prompt: "You are a helpful AI Assistant, designed to provided well-reasoned and detailed responses. You FIRST think about the reasoning process as an internal monologue and then provide the user with the answer. The reasoning process MUST BE enclosed within <think> and </think> tags."
+system_prompt: |-
+  You are a helpful math assistant. Solve problems step by step using the following format:
+
+  1. Put your step-by-step reasoning inside <think> tags
+  2. After your reasoning, provide the final numerical answer
+  3. End with the final answer in a clear format
+
+  Example:
+  <think>
+  1. First, I need to add 3 and 4
+  2. 3 + 4 = 7
+  3. Then multiply by 2
+  4. 7 * 2 = 14
+  </think>
+  The answer is 14.
+
+  #### 14
 
 # GRPO trainer config
+model_name_or_path: aidando73/Qwen-2.5-7B-Simple-RL-v5
+hub_model_id: Qwen-2.5-7B-Simple-RL-v5
+output_dir: data/Qwen-2.5-7B-Simple-RL-v5
+wandb_project: open-r1-math-rl
+# Address issue with potentially v2 catastrophic forgetting
+learning_rate: 3e-06
+reward_weights:
+- 1.0  # Accuracy weight
+- 0.5  # Format weight - balanced approach
+max_grad_norm: 1.0  # Add gradient clipping to prevent spikes
+kl_penalty: 0.05  # Add mild KL penalty to prevent catastrophic forgetting
+
+# Standard configuration
+reward_funcs:
+- accuracy
+- format
 bf16: true
 use_vllm: true
 vllm_device: auto
@@ -21,33 +52,24 @@ gradient_accumulation_steps: 8
 gradient_checkpointing: true
 gradient_checkpointing_kwargs:
   use_reentrant: false
-hub_model_id: Qwen-2.5-7B-Simple-RL
 hub_strategy: every_save
-learning_rate: 3.0e-06
 log_completions: true
 log_level: info
 logging_first_step: true
 logging_steps: 5
 logging_strategy: steps
 lr_scheduler_type: cosine
-max_prompt_length: 512
+max_prompt_length: 650
 max_completion_length: 1024
 max_steps: -1
 num_generations: 7
 num_train_epochs: 1
-output_dir: data/Qwen-2.5-7B-Simple-RL
 overwrite_output_dir: true
 per_device_eval_batch_size: 16
 per_device_train_batch_size: 16
 push_to_hub: true
 report_to:
 - wandb
-reward_funcs:
-- accuracy
-- format
-reward_weights:
-- 1.0
-- 1.0
-save_strategy: "no"
+save_strategy: "epoch"
 seed: 42
 warmup_ratio: 0.1
